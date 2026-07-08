@@ -13,6 +13,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quantum_user -d quantum_ensemble"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -22,6 +27,50 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: quantum_api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://quantum_user:quantum_password@postgres:5432/quantum_ensemble
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./database:/app/database
+      - ./shared:/app/shared
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: ../../docker/web.Dockerfile
+    container_name: quantum_web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
 
 volumes:
   postgres_data:

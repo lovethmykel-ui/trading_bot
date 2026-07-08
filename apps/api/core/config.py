@@ -1,9 +1,9 @@
+import os
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Quantum Ensemble"
-    import os
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://quantum_user:quantum_password@localhost:5432/quantum_ensemble")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "YOUR_SUPER_SECRET_KEY_HERE")
     ALGORITHM: str = "HS256"
