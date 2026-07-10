@@ -54,6 +54,8 @@ services:
       - ./apps/api:/app/apps/api
       - ./database:/app/database
       - ./shared:/app/shared
+      - ./services:/app/services
+      - ./ai:/app/ai
 
   indicator_worker:
     build:
