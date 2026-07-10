@@ -38,7 +38,6 @@ main_loop = None
 
 def handle_bybit_message(message):
     """Callback for messages coming from Bybit (runs in a background thread)"""
-    global main_loop
     if main_loop and main_loop.is_running():
         # Safely schedule the broadcast on the main async event loop
         asyncio.run_coroutine_threadsafe(manager.broadcast(json.dumps(message)), main_loop)
