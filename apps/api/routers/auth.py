@@ -45,6 +45,16 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@router.post("/google", response_model=Token)
+def google_auth():
+    """Placeholder for Google OAuth flow requested in Sprint 1."""
+    # This would typically redirect to Google OAuth consent screen,
+    # then handle the callback, verify the token, and issue our JWT.
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Google OAuth flow is planned but not fully implemented in Sprint 1."
+    )
+
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()

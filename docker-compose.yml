@@ -55,6 +55,21 @@ services:
       - ./database:/app/database
       - ./shared:/app/shared
 
+  indicator_worker:
+    build:
+      context: .
+      dockerfile: docker/indicator_worker.Dockerfile
+    container_name: quantum_indicator_worker
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./services/indicator_engine:/app/services/indicator_engine
+
   web:
     build:
       context: ./apps/web

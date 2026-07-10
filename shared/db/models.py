@@ -20,7 +20,7 @@ class ExchangeAccount(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     exchange_name = Column(String, nullable=False) # e.g., 'bybit'
     api_key = Column(String, nullable=False)
-    api_secret = Column(String, nullable=False)
+    api_secret = Column(String, nullable=False)  # In a production environment this should use sqlalchemy-utils EncryptedType
     is_testnet = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
