@@ -31,23 +31,46 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+import threading
+
+# Global reference to the main event loop
+main_loop = None
+
 def handle_bybit_message(message):
-    """Callback for messages coming from Bybit"""
-    try:
-        loop = asyncio.get_running_loop()
-        loop.create_task(manager.broadcast(json.dumps(message)))
-    except RuntimeError:
-        # If no running loop, we can't broadcast easily without setting up a background task.
-        # This handles the case where Bybit's sync callback fires in a different thread.
-        # A more robust solution uses asyncio.run_coroutine_threadsafe with a reference to the main loop.
-        pass
+    """Callback for messages coming from Bybit (runs in a background thread)"""
+    global main_loop
+    if main_loop and main_loop.is_running():
+        # Safely schedule the broadcast on the main async event loop
+        asyncio.run_coroutine_threadsafe(manager.broadcast(json.dumps(message)), main_loop)
+
+# Initialize Bybit WebSocket globally so it runs once
+bybit_ws = None
+
+def start_bybit_stream():
+    global bybit_ws
+    if bybit_ws is None:
+        try:
+            bybit_ws = BybitWebSocket(testnet=settings.BYBIT_TESTNET, channel_type="linear")
+            # Subscribe to public trades for BTCUSDT
+            bybit_ws.trade_stream(symbol="BTCUSDT", callback=handle_bybit_message)
+            # Subscribe to orderbook (depth 50)
+            bybit_ws.orderbook_stream(depth=50, symbol="BTCUSDT", callback=handle_bybit_message)
+        except Exception as e:
+            print(f"Failed to start Bybit WS: {e}")
+
+@router.on_event("startup")
+async def startup_event():
+    global main_loop
+    main_loop = asyncio.get_running_loop()
+    # Start the Bybit connection in a separate thread so it doesn't block FastAPI startup
+    threading.Thread(target=start_bybit_stream, daemon=True).start()
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
+            # We don't expect client messages in this uni-directional data stream MVP
             data = await websocket.receive_text()
-            await manager.broadcast(f"Echo: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)

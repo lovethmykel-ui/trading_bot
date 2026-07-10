@@ -4,6 +4,8 @@ from apps.api.core.security import get_current_user
 
 router = APIRouter()
 
+from apps.api.core.bybit import get_bybit_client
+
 @router.get("/data", response_model=Dict[str, Any])
 async def get_market_data(
     symbol: str = Query(..., description="The trading pair symbol (e.g., BTCUSDT)"),
@@ -12,25 +14,76 @@ async def get_market_data(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
-    Get historical kline/candle data for a specific symbol.
-    In a complete implementation, this would query the Bybit API or the local database.
-    For Sprint 1/2, this returns mocked data structure.
+    Get historical kline/candle data for a specific symbol directly from Bybit API.
     """
-    # Mock response for UI
-    return {
-        "symbol": symbol,
-        "interval": interval,
-        "data": [
-            {
-                "timestamp": 1690000000000,
-                "open": "64000.50",
-                "high": "64500.00",
-                "low": "63800.00",
-                "close": "64250.00",
-                "volume": "120.5"
-            }
-        ]
-    }
+    try:
+        # Initialize an unauthenticated Bybit client for public market data
+        client = get_bybit_client()
+
+        # Fetch klines (OHLCV)
+        # Bybit API structure: category='linear' for futures, 'spot' for spot
+        response = client.get_kline(
+            category="linear",
+            symbol=symbol,
+            interval=interval,
+            limit=limit
+        )
+
+        # Bybit returns a list of lists: [startTime, openPrice, highPrice, lowPrice, closePrice, volume, turnover]
+        formatted_data = []
+        if response and "result" in response and "list" in response["result"]:
+            kline_list = response["result"]["list"]
+            # Bybit returns newest first, so we reverse it for chronological order
+            for kline in reversed(kline_list):
+                formatted_data.append({
+                    "timestamp": int(kline[0]),
+                    "open": float(kline[1]),
+                    "high": float(kline[2]),
+                    "low": float(kline[3]),
+                    "close": float(kline[4]),
+                    "volume": float(kline[5])
+                })
+
+        return {
+            "symbol": symbol,
+            "interval": interval,
+            "data": formatted_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch market data: {str(e)}")
+
+@router.get("/orderbook", response_model=Dict[str, Any])
+async def get_orderbook(
+    symbol: str = Query("BTCUSDT"),
+    limit: int = Query(50, description="Depth of the orderbook (1, 50, 200)"),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Get live orderbook depth/liquidity from Bybit.
+    Used by the frontend to render the Order Flow heatmaps.
+    """
+    try:
+        client = get_bybit_client()
+        response = client.get_orderbook(category="linear", symbol=symbol, limit=limit)
+
+        bids = []
+        asks = []
+
+        if response and "result" in response:
+            res = response["result"]
+            # Bybit returns bids/asks as ["price", "size"] strings
+            bids = [{"price": float(b[0]), "size": float(b[1])} for b in res.get("b", [])]
+            asks = [{"price": float(a[0]), "size": float(a[1])} for a in res.get("a", [])]
+
+        return {
+            "status": "success",
+            "symbol": symbol,
+            "bids": bids,
+            "asks": asks,
+            "timestamp": response.get("time") if response else None
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch orderbook: {str(e)}")
 
 @router.get("/indicators", response_model=Dict[str, Any])
 async def get_market_indicators(
