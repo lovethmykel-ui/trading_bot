@@ -365,8 +365,8 @@ export default function SettingsPage() {
               <span className={`w-2 h-2 rounded-full ${botStatus?.running ? "bg-green-400 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]" : "bg-slate-500"}`} />
               {botStatus?.running ? "Bot Running" : "Bot Stopped"}
             </div>
-            {botStatus?.pairs_scanned > 0 && (
-              <span className="text-xs text-slate-400 font-mono tracking-wider">{botStatus.pairs_scanned} pairs scanned</span>
+            {(botStatus?.pairs_scanned ?? 0) > 0 && (
+              <span className="text-xs text-slate-400 font-mono tracking-wider">{botStatus?.pairs_scanned} pairs scanned</span>
             )}
           </div>
 
