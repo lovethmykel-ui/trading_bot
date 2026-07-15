@@ -31,7 +31,7 @@ export function LiveBtcChart() {
     // Mock initial data
     // Time in lightweight-charts must be formatted as UTCTimestamp (number of seconds since epoch)
     const initialData: { time: Time; value: number }[] = [];
-    let currentTime = Math.floor(Date.now() / 1000) - 3600 * 24;
+    let currentTime = Math.floor(Date.now() / 1000) - 100 * 3600;
     let price = 65000;
 
     for (let i = 0; i < 100; i++) {
@@ -51,11 +51,13 @@ export function LiveBtcChart() {
     window.addEventListener("resize", handleResize);
 
     // Mock live updates
+    let liveTime = currentTime;
     const interval = setInterval(() => {
       price += (Math.random() - 0.5) * 500;
-      const time = Math.floor(Date.now() / 1000) as Time;
-      lineSeries.update({ time: time, value: price });
+      liveTime += 10; // strictly increasing timestamp
+      lineSeries.update({ time: liveTime as Time, value: price });
     }, 2000);
+
 
     return () => {
       window.removeEventListener("resize", handleResize);

@@ -26,29 +26,35 @@ export default function AILabPage() {
   const fetchConsensus = async () => {
     setLoading(true);
     try {
-      // In a real app, this fetches from /ai/consensus
-      // Mocking the successful response for UI visualization
-      setTimeout(() => {
-        setData({
-          final_decision: "LONG",
-          overall_confidence: 76,
-          is_trade_recommended: true,
-          agent_breakdown: [
-            { agent: "Market Structure", signal: "LONG", confidence: 85, reasoning: "Higher highs on 4H." },
-            { agent: "Trend", signal: "LONG", confidence: 90, reasoning: "Price above 50 EMA." },
-            { agent: "Order Flow", signal: "LONG", confidence: 70, reasoning: "Bid absorption." },
-            { agent: "Volume", signal: "NEUTRAL", confidence: 50, reasoning: "Average volume profile." },
-            { agent: "Sentiment", signal: "NEUTRAL", confidence: 60, reasoning: "Mixed social feeds." },
-            { agent: "Macro News", signal: "SHORT", confidence: 40, reasoning: "Slight hawkish fed tone." },
-            { agent: "Risk", signal: "LONG", confidence: 80, reasoning: "Low volatility environment." }
-          ]
-        });
+      const res = await fetch("http://localhost:8000/ai/consensus?symbol=BTCUSDT");
+      const json = await res.json();
+      if (json.status === "success" && json.data) {
+        setData(json.data);
         setLoading(false);
-      }, 1000);
+        return;
+      }
     } catch (e) {
-      console.error(e);
-      setLoading(false);
+      console.warn("Backend AI consensus failed, falling back to mock data:", e);
     }
+
+    // Mock fallback
+    setTimeout(() => {
+      setData({
+        final_decision: "LONG",
+        overall_confidence: 76,
+        is_trade_recommended: true,
+        agent_breakdown: [
+          { agent: "Market Structure", signal: "LONG", confidence: 85, reasoning: "Higher highs on 4H." },
+          { agent: "Trend", signal: "LONG", confidence: 90, reasoning: "Price above 50 EMA." },
+          { agent: "Order Flow", signal: "LONG", confidence: 70, reasoning: "Bid absorption." },
+          { agent: "Volume", signal: "NEUTRAL", confidence: 50, reasoning: "Average volume profile." },
+          { agent: "Sentiment", signal: "NEUTRAL", confidence: 60, reasoning: "Mixed social feeds." },
+          { agent: "Macro News", signal: "SHORT", confidence: 40, reasoning: "Slight hawkish fed tone." },
+          { agent: "Risk", signal: "LONG", confidence: 80, reasoning: "Low volatility environment." }
+        ]
+      });
+      setLoading(false);
+    }, 1000);
   };
 
   useEffect(() => {

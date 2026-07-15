@@ -7,3 +7,6 @@ node_modules/
 .next/
 dist/
 build/
+*.db
+.venv/
+bybit_raw_balance.json

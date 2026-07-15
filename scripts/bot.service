@@ -1,0 +1,19 @@
+[Unit]
+Description=Quantum Trading Bot Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+User=root
+Group=docker
+WorkingDirectory=/opt/quant-trading-bot
+# Shut down existing containers
+ExecStartPre=/usr/local/bin/docker-compose down
+# Compose up
+ExecStart=/usr/local/bin/docker-compose up
+# Compose down on stop
+ExecStop=/usr/local/bin/docker-compose down
+
+[Install]
+WantedBy=multi-user.target
