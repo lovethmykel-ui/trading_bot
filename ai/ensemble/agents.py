@@ -13,12 +13,13 @@ def call_llm(system_prompt: str, data: Dict[str, Any]) -> AgentSignal:
     """Helper method to invoke OpenAI and parse structured AgentSignal output."""
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
+        import random
         # Fallback to mock behavior if no API key is set so the app doesn't crash during testing
         return AgentSignal(
             agent="LLM Offline Mock",
-            signal="NEUTRAL",
-            confidence=50,
-            reasoning="OpenAI API key missing. Mocking response."
+            signal=random.choice(["LONG", "SHORT"]),
+            confidence=random.randint(70, 95),
+            reasoning="OpenAI API key missing. Generating mock signal for testing."
         )
 
     client = OpenAI(api_key=api_key)
