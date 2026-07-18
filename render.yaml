@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: quantum-ensemble-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT
+    disk:
+      name: sqlite-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////data/quant_trading.db
+      - key: BYBIT_TESTNET
+        value: "true"
+      - key: RISK_PER_TRADE_PCT
+        value: "10.0"
+      - key: STOP_LOSS_PCT
+        value: "2.0"
+      - key: TAKE_PROFIT_PCT
+        value: "4.0"
+      - key: TRADING_INTERVAL_SECONDS
+        value: "300"
+      - key: TOP_PAIRS_TO_SCAN
+        value: "50"
+      - key: MIN_24H_VOLUME_USDT
+        value: "1000000"
+      - key: SIGNAL_CONVICTION_THRESHOLD
+        value: "0.60"
+      # IMPORTANT: Add your secret keys via the Render dashboard, DO NOT hardcode them here!
+      # TELEGRAM_BOT_TOKEN
+      # OPENAI_API_KEY
+      # BYBIT_API_KEY
+      # BYBIT_API_SECRET

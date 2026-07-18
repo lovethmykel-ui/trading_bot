@@ -6,7 +6,8 @@ export function PortfolioOverview() {
   const [balance, setBalance] = useState({ usdt_free: 0, usdt_total: 0 });
   
   useEffect(() => {
-    fetch("http://localhost:8000/portfolio")
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${API_URL}/portfolio`)
       .then(res => res.json())
       .then(data => {
          if (data.status === "success" && data.data) {

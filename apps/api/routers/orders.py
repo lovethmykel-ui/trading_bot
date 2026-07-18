@@ -81,6 +81,22 @@ def get_live_order_history(
     if not account:
         raise HTTPException(status_code=400, detail="No exchange account connected.")
 
+    if account.exchange_name == "paper":
+        orders = db.query(Order).filter(Order.account_id == account.id).order_by(Order.created_at.desc()).limit(limit).all()
+        return {"status": "success", "data": [
+            {
+                "order_id": str(o.id),
+                "symbol": o.symbol,
+                "side": o.side,
+                "order_type": o.order_type,
+                "qty": o.amount,
+                "price": o.price,
+                "avg_price": o.price,
+                "status": o.status,
+                "created_at": o.created_at.isoformat() if o.created_at else None
+            } for o in orders
+        ]}
+
     orders = bybit_client.get_order_history(account.api_key, account.api_secret, limit=limit)
     return {"status": "success", "data": orders}
 
@@ -156,6 +172,18 @@ def get_positions(
     ).first()
     if not account:
         return {"status": "success", "data": []}
+
+    if account.exchange_name == "paper":
+        positions = db.query(Position).filter(Position.account_id == account.id).all()
+        return {"status": "success", "data": [
+            {
+                "symbol": p.symbol,
+                "side": p.side,
+                "size": p.size,
+                "entry_price": p.entry_price,
+                "unrealized_pnl": p.unrealized_pnl
+            } for p in positions
+        ]}
 
     positions = bybit_client.get_live_positions(account.api_key, account.api_secret)
     return {"status": "success", "data": positions}

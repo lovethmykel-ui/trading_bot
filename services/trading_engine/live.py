@@ -38,6 +38,10 @@ class LiveTradingEngine:
     @staticmethod
     def sync_balance(db: Session, account: ExchangeAccount) -> Dict[str, Any]:
         """Pull real balance from Bybit and persist to DB."""
+        if account.exchange_name == "paper":
+            bals = db.query(Balance).filter(Balance.account_id == account.id).all()
+            return {b.asset: {"free": b.free, "locked": b.locked, "total": b.free + b.locked} for b in bals}
+
         live_balances = bybit_client.get_live_balance(account.api_key, account.api_secret)
 
         synced = {}
@@ -68,6 +72,10 @@ class LiveTradingEngine:
     @staticmethod
     def sync_positions(db: Session, account: ExchangeAccount) -> list:
         """Pull open positions from Bybit and persist to DB."""
+        if account.exchange_name == "paper":
+            positions = db.query(Position).filter(Position.account_id == account.id).all()
+            return [{"symbol": p.symbol, "side": p.side, "size": p.size, "entry_price": p.entry_price, "unrealized_pnl": p.unrealized_pnl} for p in positions]
+
         live_positions = bybit_client.get_live_positions(account.api_key, account.api_secret)
 
         # Detect closed positions before deleting
