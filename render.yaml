@@ -3,14 +3,10 @@ services:
     name: quantum-ensemble-api
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT
-    disk:
-      name: sqlite-data
-      mountPath: /data
-      sizeGB: 1
+    startCommand: python init_db.py && uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        value: sqlite:////data/quant_trading.db
+        value: sqlite:///quant_trading.db
       - key: BYBIT_TESTNET
         value: "true"
       - key: RISK_PER_TRADE_PCT
